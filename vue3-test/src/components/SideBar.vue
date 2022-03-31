@@ -1,22 +1,30 @@
 <template>
   <div class="siderBar">
-    <el-aside :width="iscollapse ? '64px' : '200px'">
-      <div class="toggle-button" @click='toggleCollapse'>
-        <el-icon v-if="iscollapse" :size="22" style="margin-right: 10px;color: #fff;"> <fold /> </el-icon>
-        <el-icon v-else :size="22" style="margin-right: 10px;color: #fff;"> <expand /></el-icon>
-      </div>
-      <!-- 菜单 -->
-      <el-menu
-        :default-active="active"
-        class="sidebar-menu"
-        background-color="#f9f9f9"
-        text-color="#565656"
-        unique-opened
-        router
-        active-text-color="#0079fe"
-        :collapse="isCollapse"
-        @select="handleSelect">
-        <template v-for="item in menuList">
+    <!-- 菜单 -->
+    <!-- :collapse="isCollapse" -->
+    <el-menu
+      :default-active="$route.fullPath"
+      :style="{width: isCollapse ? '50px': '200px'}"
+      background-color="#202c3a"
+      text-color="#fff"
+      active-text-color="#ffd04b"
+      :router="false"
+      :collapse-transition="true"
+      @select="handleSelect">
+      <template v-for="item in menuList">
+        <template v-if="item.children && item.level == 0">
+          <el-submenu :index="String(item.id)" :key="item.id">
+            <template #title>
+              <i class="el-icon-s-order" style="margin-right: 5px;font-size:20px;"></i>
+              <span>{{ item.menuName }}</span>
+            </template>
+            <el-menu-item v-for="(items, i) in item.children" :key="i" :index="items.menuUrl" :route="`/${items.menuUrl}`" :to="items.id" >
+              {{items.menuName}}
+            </el-menu-item>
+          </el-submenu>
+        </template>
+
+        <template v-else>
           <template v-if="item.children && item.level == 0">
             <el-submenu :index="String(item.id)" :key="item.id">
               <template #title>
@@ -30,36 +38,21 @@
           </template>
 
           <template v-else>
-            <template v-if="item.children && item.level == 0">
-              <el-submenu :index="String(item.id)" :key="item.id">
-                <template #title>
-                  <i class="el-icon-s-order" style="margin-right: 5px;font-size:20px;"></i>
-                  <span>{{ item.menuName }}</span>
-                </template>
-                <el-menu-item v-for="(items, i) in item.children" :key="i" :index="items.menuUrl" :route="`/${items.menuUrl}`" :to="items.id" >
-                  {{items.menuName}}
-                </el-menu-item>
-              </el-submenu>
-            </template>
-
-            <template v-else>
-              <el-menu-item :index="item.menuUrl" :route="`/${item.menuUrl}`" :key="item.id" :to="item.id">
-                {{item.menuName}}
-              </el-menu-item>
-            </template>
+            <el-menu-item :index="item.menuUrl" :route="`/${item.menuUrl}`" :key="item.id" :to="item.id">
+              {{item.menuName}}
+            </el-menu-item>
           </template>
-
         </template>
-      </el-menu>
-    </el-aside>
+
+      </template>
+    </el-menu>
   </div>
 </template>
 
 <script>
-import {Fold, Expand } from '@element-plus/icons-vue'
+import emitter from "@/utils/mitt.js"
 export default {
   name:'SiderBar',
-  components:{Fold, Expand },
   data(){
     return {
       iscollapse: false,
@@ -73,14 +66,15 @@ export default {
     }
   },
   methods:{
-    // 展开折叠
-    toggleCollapse(){
-      this.iscollapse = !this.iscollapse
-    },
     // 
     handleSelect(key, path){
       console.log(key, path)
     },
+  },
+  mounted(){
+    emitter.on("showAside", msg=>{ 
+      this.isCollapse = msg
+    }) 
   }
 }
 </script>
